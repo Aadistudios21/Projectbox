@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Project Boxes — Grid (100) — Customizer & Search</title>
+<style>
+  :root{
+    --bg:#f7f5f2;
+    --card:#ffffffee;
+    --muted:#6b7280;
+    --accent1:#00D4FF;
+    --accent2:#6C5BFF;
+    --accent3:#FF4FD8;
+    --shadow: 0 8px 30px rgba(8,10,30,0.06);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  html,body{height:100%;margin:0;background:var(--bg);color:#0b1220}
+  .wrap{max-width:1200px;margin:18px auto;padding:18px}
+  header{display:flex;gap:12px;align-items:center;justify-content:space-between}
+  .left{display:flex;gap:12px;align-items:center}
+  .logo{display:flex;align-items:center;gap:10px}
+  .logo svg{width:42px;height:42px;border-radius:8px}
+  h1{margin:0;font-size:18px}
+  .controls-top{display:flex;gap:12px;align-items:center}
+  input[type="search"], input[type="text"], select{padding:8px;border-radius:8px;border:1px solid #e6e9ee}
+  label{font-size:13px;color:var(--muted)}
+  .toolbar{display:flex;gap:8px;align-items:center}
+  .btn{padding:8px 12px;border-radius:10px;border:none;cursor:pointer;font-weight:600}
+  .btn-primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#fff}
+  .top-row{display:flex;gap:12px;margin-top:14px;align-items:center;flex-wrap:wrap}
+
+  /* grid */
+  .grid-wrap{margin-top:18px;border-radius:12px;background:linear-gradient(180deg,#ffffff, #fbfbfb);padding:14px;box-shadow:var(--shadow);border:1px solid #eef2f7}
+  .grid-controls{display:flex;gap:12px;align-items:center;justify-content:space-between}
+  .zoom-controls{display:flex;gap:8px;align-items:center}
+  .zoom-slider{width:220px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-top:12px;transform-origin:center center;transition:transform 120ms linear}
+  .box-card{background:#fff;border-radius:12px;padding:8px;box-shadow:0 6px 18px rgba(10,10,30,0.06);display:flex;flex-direction:column;gap:8px;align-items:stretch}
+  .box-stage{background:linear-gradient(180deg,#f6f7fb,transparent);border-radius:10px;padding:6px;display:flex;align-items:center;justify-content:center;height:120px}
+  .meta{display:flex;justify-content:space-between;align-items:center;font-size:13px}
+  .meta .owner{font-weight:600}
+  .meta .sale{font-size:12px;color:#fff;padding:4px 8px;border-radius:999px}
+  .sale-yes{background:linear-gradient(90deg,#10b981,#06b6d4)}
+  .sale-no{background:#e5e7eb;color:#374151}
+
+  .box-actions{display:flex;gap:8px;justify-content:flex-end}
+  .small{font-size:12px;color:var(--muted)}
+
+  /* modal */
+  .modal-back{position:fixed;inset:0;background:rgba(3,6,18,0.45);display:none;align-items:center;justify-content:center;z-index:60}
+  .modal{width:640px;max-width:94%;background:#fff;padding:16px;border-radius:12px;box-shadow:0 12px 40px rgba(10,12,30,0.2)}
+  .modal h3{margin:0 0 8px}
+  .modal .row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .modal label{min-width:120px}
+
+  /* responsive */
+  @media (max-width:760px){ .grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr)) } }
+
+  /* helpful */
+  .muted{color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="left">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="gL" x1="0" x2="1"><stop offset="0" stop-color="#00D4FF"/><stop offset="0.5" stop-color="#6C5BFF"/><stop offset="1" stop-color="#FF4FD8"/></linearGradient>
+            </defs>
+            <rect width="100" height="100" rx="18" fill="url(#gL)"/>
+            <g transform="translate(10,8) scale(0.8)"><path d="M40 4 L76 20 L76 56 L40 72 L4 56 L4 20 Z" stroke="#fff" stroke-width="4" stroke-linejoin="round" fill="none"/></g>
+          </svg>
+        </div>
+        <div>
+          <h1>PROJECT BOX — Grid (100)</h1>
+          <div class="muted">Search, zoom, edit (owners), upload image per box</div>
+        </div>
+      </div>
+
+      <div class="controls-top">
+        <div class="toolbar">
+          <label for="loginInput" class="small">Login as</label>
+          <input id="loginInput" type="text" placeholder="enter username" />
+          <button id="btnLogin" class="btn">Set</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="top-row">
+      <div style="flex:1;display:flex;gap:10px;align-items:center">
+        <input id="searchBox" type="search" placeholder="Search boxes by owner username..." style="flex:1" />
+        <label style="display:flex;align-items:center;gap:8px"><input id="onlyOnSale" type="checkbox" /> Only on sale</label>
+        <button id="btnResetAll" class="btn">Reset all</button>
+      </div>
+
+      <div style="display:flex;gap:12px;align-items:center">
+        <div class="small">Zoom:</div>
+        <input id="zoomSlider" class="zoom-slider" type="range" min="0.5" max="2.2" step="0.01" value="1" />
+        <div class="small" id="zoomValue">100%</div>
+      </div>
+    </div>
+
+    <div class="grid-wrap" id="gridWrap">
+      <div class="grid-controls">
+        <div class="muted">Showing <span id="countVisible">0</span> / 100 boxes</div>
+        <div class="muted small">Tip: hover a box and click Edit if you're the owner</div>
+      </div>
+
+      <div id="grid" class="grid" tabindex="0" aria-label="Boxes grid">
+        <!-- Boxes inserted by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit modal -->
+  <div id="modalBack" class="modal-back" role="dialog" aria-modal="true">
+    <div class="modal" id="modal">
+      <h3>Edit Box <span id="modalBoxId"></span></h3>
+      <div class="row">
+        <label>Owner:</label>
+        <div id="modalOwner" style="font-weight:700"></div>
+      </div>
+
+      <div class="row">
+        <label for="mColorA">Gradient start</label>
+        <input id="mColorA" type="color" value="#00D4FF" />
+        <label for="mColorB" style="margin-left:12px">Gradient mid</label>
+        <input id="mColorB" type="color" value="#6C5BFF" />
+        <label for="mColorC" style="margin-left:12px">Gradient end</label>
+        <input id="mColorC" type="color" value="#FF4FD8" />
+      </div>
+
+      <div class="row">
+        <label>Stripe density</label>
+        <input id="mLines" type="range" min="0" max="24" value="8" />
+        <div id="mLinesValue" class="small" style="min-width:40px;text-align:center">8</div>
+      </div>
+
+      <div class="row">
+        <label>Background</label>
+        <input id="mBg" type="color" value="#f7f5f2" />
+        <label style="margin-left:12px">On sale</label>
+        <input id="mOnSale" type="checkbox" />
+        <label style="margin-left:12px">Price (₹)</label>
+        <input id="mPrice" type="text" placeholder="e.g., 499" style="width:100px" />
+      </div>
+
+      <div class="row">
+        <label>Upload image</label>
+        <input id="mImage" type="file" accept="image/*" />
+        <div class="small">Uploaded image will be applied as face texture</div>
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button id="btnModalClose" class="btn">Cancel</button>
+        <button id="btnModalSave" class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* -------------------------
+   Data model & utilities
+   ------------------------- */
+const TOTAL = 100;
+let currentUser = ''; // login username (string)
+const ownersSample = ['alice','bob','charlie','diana','eve','frank','grace','heidi','ivan','judy'];
+// create initial boxes array
+const boxes = [];
+for(let i=1;i<=TOTAL;i++){
+  // distribute owners
+  const owner = ownersSample[(i-1) % ownersSample.length];
+  boxes.push({
+    id: i,
+    owner,
+    onSale: (i % 7 === 0), // some on sale
+    price: (i % 7 === 0) ? (199 + (i%10)*20) : null,
+    gradient: {a:'#00D4FF', b:'#6C5BFF', c:'#FF4FD8'},
+    lines: 8,
+    bg: '#f7f5f2',
+    image: null // dataURL of uploaded image if any
+  });
+}
+
+// dom refs
+const grid = document.getElementById('grid');
+const searchBox = document.getElementById('searchBox');
+const onlyOnSale = document.getElementById('onlyOnSale');
+const countVisible = document.getElementById('countVisible');
+const zoomSlider = document.getElementById('zoomSlider');
+const zoomValue = document.getElementById('zoomValue');
+const gridWrap = document.getElementById('gridWrap');
+const loginInput = document.getElementById('loginInput');
+const btnLogin = document.getElementById('btnLogin');
+const btnResetAll = document.getElementById('btnResetAll');
+
+// modal
+const modalBack = document.getElementById('modalBack');
+const modal = document.getElementById('modal');
+const modalBoxId = document.getElementById('modalBoxId');
+const modalOwner = document.getElementById('modalOwner');
+const mColorA = document.getElementById('mColorA');
+const mColorB = document.getElementById('mColorB');
+const mColorC = document.getElementById('mColorC');
+const mLines = document.getElementById('mLines');
+const mLinesValue = document.getElementById('mLinesValue');
+const mBg = document.getElementById('mBg');
+const mOnSale = document.getElementById('mOnSale');
+const mPrice = document.getElementById('mPrice');
+const mImage = document.getElementById('mImage');
+const btnModalClose = document.getElementById('btnModalClose');
+const btnModalSave = document.getElementById('btnModalSave');
+
+let editingBoxId = null;
+
+/* -------------------------
+   Rendering
+   ------------------------- */
+function renderGrid(){
+  // clear
+  grid.innerHTML = '';
+  const query = (searchBox.value || '').trim().toLowerCase();
+  const saleOnly = onlyOnSale.checked;
+  let visible = 0;
+
+  for(const box of boxes){
+    // filter
+    if(query){
+      if(!box.owner.toLowerCase().includes(query)) continue;
+    }
+    if(saleOnly && !box.onSale) continue;
+
+    visible++;
+    const card = createBoxCard(box);
+    grid.appendChild(card);
+  }
+  countVisible.textContent = visible;
+}
+function createBoxCard(box){
+  const card = document.createElement('div');
+  card.className = 'box-card';
+  card.dataset.id = box.id;
+
+  // stage (SVG cube)
+  const stage = document.createElement('div');
+  stage.className = 'box-stage';
+  stage.style.background = box.bg;
+
+  // create an inline SVG cube (same structure as earlier) with pattern for image if any
+  const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox','0 0 200 200');
+  svg.setAttribute('width','160');
+  svg.setAttribute('height','120');
+
+  // defs
+  const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+
+  // image pattern if provided
+  if(box.image){
+    const pat = document.createElementNS('http://www.w3.org/2000/svg','pattern');
+    pat.setAttribute('id', `imgpat_${box.id}`);
+    pat.setAttribute('patternUnits','objectBoundingBox');
+    pat.setAttribute('width','1'); pat.setAttribute('height','1');
+    const img = document.createElementNS('http://www.w3.org/2000/svg','image');
+    img.setAttributeNS('http://www.w3.org/1999/xlink','href', box.image);
+    img.setAttribute('preserveAspectRatio','xMidYMid slice');
+    img.setAttribute('width','200'); img.setAttribute('height','200');
+    pat.appendChild(img);
+    defs.appendChild(pat);
+  }
+
+  // gradient stops
+  const grad = document.createElementNS('http://www.w3.org/2000/svg','linearGradient');
+  grad.setAttribute('id', `grad_${box.id}`);
+  grad.setAttribute('x1','0'); grad.setAttribute('x2','1'); grad.setAttribute('y1','0'); grad.setAttribute('y2','1');
+
+  const s1 = document.createElementNS('http://www.w3.org/2000/svg','stop');
+  s1.setAttribute('offset','0%'); s1.setAttribute('stop-color', box.gradient.a);
+  const s2 = document.createElementNS('http://www.w3.org/2000/svg','stop');
+  s2.setAttribute('offset','50%'); s2.setAttribute('stop-color', box.gradient.b);
+  const s3 = document.createElementNS('http://www.w3.org/2000/svg','stop');
+  s3.setAttribute('offset','100%'); s3.setAttribute('stop-color', box.gradient.c);
+
+  grad.appendChild(s1); grad.appendChild(s2); grad.appendChild(s3);
+  defs.appendChild(grad);
+
+  // simple pattern of stripes for small box: use group with rects
+  const stripeG = document.createElementNS('http://www.w3.org/2000/svg','g');
+  // we'll add stripes via JS below
+  defs.appendChild(stripeG);
+
+  svg.appendChild(defs);
+
+  // group for isometric cube (translate for layout)
+  const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+  g.setAttribute('transform','translate(20,10)');
+
+  // faces: top, left, right
+  const top = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+  top.setAttribute('points','50,0 150,30 100,60 0,30');
+  top.setAttribute('fill', box.image ? `url(#imgpat_${box.id})` : `url(#grad_${box.id})`);
+  top.setAttribute('opacity','1');
+  g.appendChild(top);
+
+  const left = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+  left.setAttribute('points','0,30 50,60 50,140 0,110');
+  left.setAttribute('fill', box.image ? `url(#imgpat_${box.id})` : shade(box.gradient.a, -12));
+  left.setAttribute('opacity','0.95');
+  g.appendChild(left);
+
+  const right = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+  right.setAttribute('points','150,30 100,60 100,140 150,110');
+  right.setAttribute('fill', box.image ? `url(#imgpat_${box.id})` : shade(box.gradient.c, -18));
+  right.setAttribute('opacity','0.95');
+  g.appendChild(right);
+
+  // outline
+  const outline = document.createElementNS('http://www.w3.org/2000/svg','polyline');
+  outline.setAttribute('points','50,0 150,30 150,110 100,140 50,110 0,30 50,0');
+  outline.setAttribute('fill','none');
+  outline.setAttribute('stroke','#0b1230');
+  outline.setAttribute('stroke-width','2');
+  outline.setAttribute('stroke-linejoin','round');
+  g.appendChild(outline);
+
+  svg.appendChild(g);
+  stage.appendChild(svg);
+
+  // add stripe overlays: perform using rects inside g for small detail
+  addStripesSmall(g, box);
+
+  // meta
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+  const leftMeta = document.createElement('div');
+  leftMeta.innerHTML = `<div class="owner">${box.owner}</div><div class="small">Box #${box.id}</div>`;
+  const rightMeta = document.createElement('div');
+  const saleSpan = document.createElement('span');
+  saleSpan.className = 'sale ' + (box.onSale ? 'sale-yes' : 'sale-no');
+  saleSpan.textContent = box.onSale ? `ON SALE ₹${box.price}` : 'Not on sale';
+  rightMeta.appendChild(saleSpan);
+
+  meta.appendChild(leftMeta); meta.appendChild(rightMeta);
+
+  // actions
+  const actions = document.createElement('div');
+  actions.className = 'box-actions';
+  // edit button (only show if currentUser === owner)
+  const editBtn = document.createElement('button');
+  editBtn.className = 'btn';
+  editBtn.textContent = 'Edit';
+  editBtn.title = 'Edit this box (owner only)';
+  // We always render but disable if not owner
+  if(currentUser && currentUser === box.owner){
+    editBtn.disabled = false;
+    editBtn.addEventListener('click', ()=> openEditModal(box.id));
+  } else {
+    editBtn.disabled = true;
+    editBtn.style.opacity = 0.5;
+  }
+  actions.appendChild(editBtn);
+
+  // buy button (if on sale and not owner)
+  if(box.onSale && currentUser !== box.owner){
+    const buy = document.createElement('button');
+    buy.className = 'btn btn-primary';
+    buy.textContent = 'Buy';
+    buy.addEventListener('click', ()=> { alert(`Simulated buy: Box ${box.id} by ${box.owner} — price ₹${box.price}`); });
+    actions.appendChild(buy);
+  }
+
+  card.appendChild(stage);
+  card.appendChild(meta);
+  card.appendChild(actions);
+
+  return card;
+}
+
+/* draw small stripes/pattern for the mini preview */
+function addStripesSmall(g, box){
+  // remove existing stripes rects if any
+  const existing = Array.from(g.querySelectorAll('rect')) || [];
+  existing.forEach(n => n.remove());
+
+  const density = box.lines || 8;
+  const baseX = 8;
+  // draw vertical-ish bars on left and right, and diagonal on top
+  for(let i=0;i<density;i++){
+    const t = i/(Math.max(density-1,1));
+    const color = mixColors(box.gradient.a, box.gradient.b, box.gradient.c, t);
+    // top diagonal as thin rect
+    const r = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    r.setAttribute('x', 6 + i*7);
+    r.setAttribute('y', 12 + i*1.2);
+    r.setAttribute('width', 84);
+    r.setAttribute('height', 5);
+    r.setAttribute('fill', color);
+    r.setAttribute('opacity','0.7');
+    r.setAttribute('transform','skewX(-12)');
+    g.appendChild(r);
+  }
+}
+
+/* -------------------------
+   helpers: color, mix, shade
+   ------------------------- */
+function hexToRgb(hex){ const h = hex.replace('#',''); return {r:parseInt(h.slice(0,2),16), g:parseInt(h.slice(2,4),16), b:parseInt(h.slice(4,6),16)}; }
+function rgbToHex(r,g,b){ return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join(''); }
+function mixColors(a,b,c,t){
+  const A = hexToRgb(a), B = hexToRgb(b), C = hexToRgb(c);
+  if(t<=0.5){
+    const u = t/0.5;
+    const r = Math.round(A.r*(1-u)+B.r*u);
+    const g = Math.round(A.g*(1-u)+B.g*u);
+    const bl = Math.round(A.b*(1-u)+B.b*u);
+    return rgbToHex(r,g,bl);
+  } else {
+    const u = (t-0.5)/0.5;
+    const r = Math.round(B.r*(1-u)+C.r*u);
+    const g = Math.round(B.g*(1-u)+C.g*u);
+    const bl = Math.round(B.b*(1-u)+C.b*u);
+    return rgbToHex(r,g,bl);
+  }
+}
+function shade(hex, percent){
+  const f = hexToRgb(hex);
+  const t = percent < 0 ? 0 : 255;
+  const p = Math.abs(percent)/100;
+  const R = Math.round((t - f.r) * p) + f.r;
+  const G = Math.round((t - f.g) * p) + f.g;
+  const B = Math.round((t - f.b) * p) + f.b;
+  return rgbToHex(R,G,B);
+}
+
+/* -------------------------
+   Search & filter handlers
+   ------------------------- */
+searchBox.addEventListener('input', renderGrid);
+onlyOnSale.addEventListener('change', renderGrid);
+btnResetAll.addEventListener('click', ()=> {
+  // reset models to initial defaults (but keep login)
+  for(const b of boxes){
+    b.gradient = {a:'#00D4FF', b:'#6C5BFF', c:'#FF4FD8'};
+    b.lines = 8;
+    b.bg = '#f7f5f2';
+    b.image = null;
+    b.onSale = (b.id % 7 === 0);
+    b.price = b.onSale ? (199 + (b.id%10)*20) : null;
+  }
+  renderGrid();
+});
+
+/* -------------------------
+   Zooming (wheel + slider)
+   ------------------------- */
+let zoom = 1;
+const MIN_Z = 0.5, MAX_Z = 2.2;
+function setZoom(v){
+  zoom = Math.min(MAX_Z, Math.max(MIN_Z, v));
+  grid.style.transform = `scale(${zoom})`;
+  zoomSlider.value = zoom.toFixed(2);
+  zoomValue.textContent = Math.round(zoom*100) + '%';
+}
+zoomSlider.addEventListener('input', e => setZoom(parseFloat(e.target.value)));
+
+gridWrap.addEventListener('wheel', (ev) => {
+  // allow zoom with ctrlKey or with wheel alone
+  // if user scrolls vertically with ctrl (mac pinch sends wheel+ctrl), we zoom
+  const delta = ev.deltaY;
+  const factor = (delta>0) ? 0.95 : 1.05;
+  // if user is holding shift or ctrl or trackpad pinch, we'll zoom; otherwise don't steal normal page scroll unless within grid area
+  if(ev.ctrlKey || ev.metaKey || Math.abs(ev.deltaX) < Math.abs(ev.deltaY)){
+    ev.preventDefault();
+    setZoom(zoom * factor);
+  }
+}, {passive:false});
+
+/* -------------------------
+   Login
+   ------------------------- */
+btnLogin.addEventListener('click', ()=> {
+  currentUser = (loginInput.value || '').trim();
+  if(!currentUser){ alert('Enter a username to log in'); return; }
+  // re-render to enable edits for owner's boxes
+  renderGrid();
+  alert(`Logged in as ${currentUser}`);
+});
+
+/* -------------------------
+   Edit modal logic
+   ------------------------- */
+function openEditModal(boxId){
+  const box = boxes.find(b => b.id === boxId);
+  if(!box) return;
+  // check owner
+  if(!currentUser || currentUser !== box.owner){
+    alert('Only the owner can edit this box. Set Login as the owner username.');
+    return;
+  }
+  editingBoxId = boxId;
+  modalBoxId.textContent = `#${boxId}`;
+  modalOwner.textContent = box.owner;
+  mColorA.value = box.gradient.a;
+  mColorB.value = box.gradient.b;
+  mColorC.value = box.gradient.c;
+  mLines.value = box.lines;
+  mLinesValue.textContent = box.lines;
+  mBg.value = box.bg;
+  mOnSale.checked = !!box.onSale;
+  mPrice.value = box.price || '';
+  mImage.value = ''; // clear input
+  modalBack.style.display = 'flex';
+}
+
+btnModalClose.addEventListener('click', ()=> { modalBack.style.display = 'none'; editingBoxId = null; });
+
+mLines.addEventListener('input', ()=> mLinesValue.textContent = mLines.value );
+
+/* image upload */
+mImage.addEventListener('change', (ev) => {
+  const f = ev.target.files && ev.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    // store base64 in the box model immediately as preview
+    const dataURL = e.target.result;
+    // temporarily set preview in modal? We'll set it on save to the actual box
+    mImage.dataset.dataurl = dataURL;
+  };
+  reader.readAsDataURL(f);
+});
+
+btnModalSave.addEventListener('click', ()=>{
+  if(!editingBoxId) return;
+  const box = boxes.find(b => b.id === editingBoxId);
+  if(!box) return;
+  // update
+  box.gradient.a = mColorA.value;
+  box.gradient.b = mColorB.value;
+  box.gradient.c = mColorC.value;
+  box.lines = parseInt(mLines.value,10) || 0;
+  box.bg = mBg.value;
+  box.onSale = !!mOnSale.checked;
+  box.price = box.onSale ? (mPrice.value.trim() || box.price || 0) : null;
+  if(mImage.dataset.dataurl){
+    box.image = mImage.dataset.dataurl;
+    delete mImage.dataset.dataurl;
+  }
+  // hide modal and re-render
+  modalBack.style.display = 'none';
+  editingBoxId = null;
+  renderGrid();
+});
+
+/* clicking outside modal to close */
+modalBack.addEventListener('click', (e) => {
+  if(e.target === modalBack) { modalBack.style.display = 'none'; editingBoxId = null; }
+});
+
+/* -------------------------
+   Initial render
+   ------------------------- */
+renderGrid();
+
+/* -------------------------
+   Keyboard shortcuts for debug
+   - "/" focuses search
+   - "l" focuses login
+   - "z" resets zoom
+   ------------------------- */
+window.addEventListener('keydown', (e) => {
+  if(e.key === '/' && document.activeElement !== searchBox){
+    e.preventDefault();
+    searchBox.focus();
+    return;
+  }
+  if(e.key.toLowerCase() === 'l'){ loginInput.focus(); }
+  if(e.key.toLowerCase() === 'z'){ setZoom(1); }
+});
+
+/* -------------------------
+   Notes about persistence:
+   - This demo stores everything in-memory only (page session).
+   - If you'd like persistence across sessions, I can add:
+     - localStorage saving, OR
+     - backend scaffold (Node.js / Express + DB).
+   ------------------------- */
+
+</script>
+</body>
+</html>
